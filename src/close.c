@@ -17,30 +17,25 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
 */
 
+/* udocker */
 
 #include <config.h>
 
-#ifdef HAVE_FCHMODAT
-
-#define _ATFILE_SOURCE
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
+#include <unistd.h>
 #include "libfakechroot.h"
 
-
-wrapper(fchmodat, int, (int dirfd, const char * path, mode_t mode, int flag))
+wrapper_alias(close, int, (int fd))
 {
-    debug("fchmodat(%d, \"%s\", 0%o, %d)", dirfd, path, mode, flag);
-    if (flag & AT_SYMLINK_NOFOLLOW) {
-    	l_expand_chroot_path_at(dirfd, path);
-    }
-    else {
-    	expand_chroot_path_at(dirfd, path);
-    }
-    return nextcall(fchmodat)(dirfd, path, mode, flag);
-}
+    int close_status;
+    char *filename = (char *) 0; 
 
-#else
-typedef int empty_translation_unit;
-#endif
+    debug("close(%d)", fd); 
+    close_status = nextcall(close)(fd);
+
+    if ((close_status == 0) && fakechroot_iswlib(fd, &filename)) {
+        fakechroot_upatch_elf(filename);
+        free(filename);
+    }
+
+    return close_status;
+}

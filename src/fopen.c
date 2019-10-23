@@ -21,12 +21,22 @@
 #include <config.h>
 
 #include <stdio.h>
+#include <string.h>
 #include "libfakechroot.h"
 
 
 wrapper(fopen, FILE *, (const char * path, const char * mode))
 {
+    FILE *fp;
+    int fd;
+
     debug("fopen(\"%s\", \"%s\")", path, mode);
     expand_chroot_path(path);
-    return nextcall(fopen)(path, mode);
+    fp = nextcall(fopen)(path, mode);
+
+    /* udocker */
+    if (fp && mode && (fd = fileno(fp)) != -1 && strstr(mode, "w"))
+        fakechroot_addwlib(fd, (char *) path);
+
+    return fp;
 }

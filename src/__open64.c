@@ -37,7 +37,12 @@ wrapper(__open64, int, (const char * pathname, int flags, ...))
     va_start(arg, flags);
 
     debug("__open64(\"%s\", %d, ...)", pathname, flags);
-    expand_chroot_path(pathname);
+    if (flags & O_NOFOLLOW) {
+        l_expand_chroot_path(pathname);
+    }
+    else {
+        expand_chroot_path(pathname);
+    }
 
     if (flags & O_CREAT) {
         mode = va_arg(arg, int);

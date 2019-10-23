@@ -19,10 +19,13 @@
 
 
 #include <config.h>
+#include <fcntl.h>
 
 #ifdef HAVE___OPENAT_2
 
+/*
 #define _ATFILE_SOURCE
+*/
 #include "libfakechroot.h"
 
 
@@ -30,7 +33,12 @@
 wrapper(__openat_2, int, (int dirfd, const char * pathname, int flags))
 {
     debug("__openat_2(%d, \"%s\", %d)", dirfd, pathname, flags);
-    expand_chroot_path_at(dirfd, pathname);
+    if (flags & O_NOFOLLOW) {
+        l_expand_chroot_path_at(dirfd, pathname);
+    }
+    else {
+        expand_chroot_path_at(dirfd, pathname);
+    }
     return nextcall(__openat_2)(dirfd, pathname, flags);
 }
 

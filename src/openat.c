@@ -32,19 +32,32 @@
 wrapper_alias(openat, int, (int dirfd, const char * pathname, int flags, ...))
 {
     int mode = 0;
+    int fd;
 
     va_list arg;
     va_start(arg, flags);
 
     debug("openat(%d, \"%s\", %d, ...)", dirfd, pathname, flags);
-    expand_chroot_path_at(dirfd, pathname);
-
+    if (flags & O_NOFOLLOW) {
+        l_expand_chroot_path_at(dirfd, pathname);
+    }
+    else {
+        expand_chroot_path_at(dirfd, pathname);
+    }
+/*
+    debug("openat expanded (%s)", pathname);
+*/
     if (flags & O_CREAT) {
         mode = va_arg(arg, int);
         va_end(arg);
     }
 
-    return nextcall(openat)(dirfd, pathname, flags, mode);
+    fd = nextcall(openat)(dirfd, pathname, flags, mode);
+    /* udocker */
+    if (fd != -1 && flags & (O_CREAT | O_WRONLY))
+        fakechroot_addwlib(fd, 0);
+
+    return fd;
 }
 
 #else

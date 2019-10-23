@@ -30,6 +30,6 @@ wrapper(link, int, (const char *oldpath, const char *newpath))
     expand_chroot_path(oldpath);
     strcpy(tmp, oldpath);
     oldpath = tmp;
-    expand_chroot_path(newpath);
+    l_expand_chroot_path(newpath);
     return nextcall(link)(oldpath, newpath);
 }

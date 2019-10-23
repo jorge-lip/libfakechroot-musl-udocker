@@ -35,7 +35,8 @@ static int (* dl_iterate_phdr_callback_saved)(DL_ITERATE_PHDR_CALLBACK_ARGS);
 static int dl_iterate_phdr_callback(DL_ITERATE_PHDR_CALLBACK_ARGS)
 {
     if (info->dlpi_name) {
-        narrow_chroot_path(info->dlpi_name);
+/*        narrow_chroot_path(info->dlpi_name);*/
+        udocker_host_narrow_chroot_path(info->dlpi_name);
     }
     return dl_iterate_phdr_callback_saved(info, size, data);
 }

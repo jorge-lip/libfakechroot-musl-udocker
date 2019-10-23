@@ -32,6 +32,7 @@
 #include "strlcpy.h"
 #include "dedotdot.h"
 
+/*
 #ifdef HAVE___XSTAT64
 # include "__xstat64.h"
 # define STAT_T stat64
@@ -41,13 +42,19 @@
 # define STAT_T stat
 # define STAT(path, sb) nextcall(stat)(path, sb)
 #endif
+*/
+# include "stat.h"
+# define STAT_T stat
+# define STAT(path, sb) nextcall(stat)(path, sb)
 
 #include "getcwd_real.h"
 
 wrapper(chroot, int, (const char * path))
 {
     char *ld_library_path, *separator, *new_ld_library_path;
+    /*
     const char *fakechroot_base = getenv("FAKECHROOT_BASE");
+    */
     int status;
     size_t len;
     char cwd[FAKECHROOT_PATH_MAX];

@@ -20,7 +20,9 @@
 
 #include <config.h>
 
+/*
 #if defined(HAVE_STAT64) && !defined(HAVE___XSTAT64)
+*/
 
 #define _BSD_SOURCE
 #define _LARGEFILE64_SOURCE
@@ -31,14 +33,19 @@
 
 #include "libfakechroot.h"
 
+#ifdef stat64
+#undef stat64
+#endif
 
-wrapper(stat64, int, (const char * file_name, struct stat64 * buf))
+wrapper(stat64, int, (const char * file_name, struct stat * buf))
 {
     debug("stat64(\"%s\", &buf)", file_name);
     expand_chroot_path(file_name);
     return nextcall(stat64)(file_name, buf);
 }
 
+/*
 #else
 typedef int empty_translation_unit;
 #endif
+*/

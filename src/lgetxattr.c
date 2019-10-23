@@ -30,7 +30,7 @@
 wrapper(lgetxattr, ssize_t, (const char * path, const char * name, void * value, size_t size))
 {
     debug("lgetxattr(\"%s\", \"%s\", &value, %zd)", path, name, size);
-    expand_chroot_path(path);
+    l_expand_chroot_path(path);
     return nextcall(lgetxattr)(path, name, value, size);
 }
 

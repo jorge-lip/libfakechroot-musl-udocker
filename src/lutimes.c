@@ -29,7 +29,7 @@
 wrapper(lutimes, int, (const char * filename, const struct timeval tv [2]))
 {
     debug("lutimes(\"%s\", &tv)", filename);
-    expand_chroot_path(filename);
+    l_expand_chroot_path(filename);
     return nextcall(lutimes)(filename, tv);
 }
 

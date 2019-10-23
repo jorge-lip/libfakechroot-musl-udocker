@@ -35,7 +35,8 @@ wrapper(__getwd_chk, char *, (char * buf, size_t buflen))
     if ((cwd = nextcall(__getwd_chk)(buf, buflen)) == NULL) {
         return NULL;
     }
-    narrow_chroot_path(cwd);
+/*    narrow_chroot_path(cwd);*/
+    udocker_host_narrow_chroot_path(cwd);
     return cwd;
 }
 

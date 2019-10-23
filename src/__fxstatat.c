@@ -26,6 +26,7 @@
 #define _BSD_SOURCE
 #define _DEFAULT_SOURCE
 #include <sys/stat.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <stdlib.h>
 
@@ -35,7 +36,12 @@
 wrapper(__fxstatat, int, (int ver, int dirfd, const char * pathname, struct stat * buf, int flags))
 {
     debug("__fxstatat(%d, %d, \"%s\", &buf, %d)", ver, dirfd, pathname, flags);
-    expand_chroot_path_at(dirfd, pathname);
+    if (flags & AT_SYMLINK_NOFOLLOW) {
+        l_expand_chroot_path_at(dirfd, pathname);
+    }
+    else {
+        expand_chroot_path_at(dirfd, pathname);
+    }
     return nextcall(__fxstatat)(ver, dirfd, pathname, buf, flags);
 }
 

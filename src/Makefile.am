@@ -37,6 +37,7 @@ libfakechroot_la_SOURCES = \
     chown.c \
     chroot.c \
     clearenv.c \
+    close.c \
     connect.c \
     creat.c \
     creat64.c \
@@ -57,6 +58,7 @@ libfakechroot_la_SOURCES = \
     faccessat.c \
     fchmodat.c \
     fchownat.c \
+    fclose.c \
     fopen.c \
     fopen64.c \
     freopen.c \
@@ -135,6 +137,7 @@ libfakechroot_la_SOURCES = \
     removexattr.c \
     rename.c \
     renameat.c \
+    renameat2.c \
     revoke.c \
     rmdir.c \
     rpl_lstat.c \
@@ -167,7 +170,8 @@ libfakechroot_la_SOURCES = \
     unlinkat.c \
     utime.c \
     utimensat.c \
-    utimes.c
+    utimes.c \
+    patchelf.c
 libfakechroot_la_LDFLAGS = -avoid-version
 
 AM_CFLAGS = $(EXTRA_CFLAGS)

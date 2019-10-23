@@ -29,14 +29,16 @@ wrapper(readlink, READLINK_TYPE_RETURN, (const char * path, char * buf, READLINK
 {
     int linksize;
     char tmp[FAKECHROOT_PATH_MAX], *tmpptr;
+    /*
     const char *fakechroot_base = getenv("FAKECHROOT_BASE");
+    */
 
     debug("readlink(\"%s\", &buf, %zd)", path, bufsiz);
     if (!strcmp(path, "/etc/malloc.conf")) {
         errno = ENOENT;
         return -1;
     }
-    expand_chroot_path(path);
+    l_expand_chroot_path(path);
 
     if ((linksize = nextcall(readlink)(path, tmp, FAKECHROOT_PATH_MAX-1)) == -1) {
         return -1;
@@ -69,3 +71,53 @@ wrapper(readlink, READLINK_TYPE_RETURN, (const char * path, char * buf, READLINK
     }
     return linksize;
 }
+
+
+LOCAL
+READLINK_TYPE_RETURN udocker_readlink(const char * path, char * buf, READLINK_TYPE_ARG3(bufsiz))
+{
+    int linksize;
+    char tmp[FAKECHROOT_PATH_MAX], *tmpptr;
+    /*
+    const char *fakechroot_base = getenv("FAKECHROOT_BASE");
+    */
+
+    debug("udocker_readlink(\"%s\", &buf, %zd)", path, bufsiz);
+    if (!strcmp(path, "/etc/malloc.conf")) {
+        errno = ENOENT;
+        return -1;
+    }
+    expand_chroot_path_orig(path);
+
+    if ((linksize = nextcall(readlink)(path, tmp, FAKECHROOT_PATH_MAX-1)) == -1) {
+        return -1;
+    }
+    tmp[linksize] = '\0';
+
+    if (fakechroot_base != NULL) {
+        tmpptr = strstr(tmp, fakechroot_base);
+        if (tmpptr != tmp) {
+            tmpptr = tmp;
+        }
+        else if (tmp[fakechroot_base_len] == '\0') {
+            tmpptr = "/";
+            linksize = 1;
+        }
+        else if (tmp[fakechroot_base_len] == '/') {
+            tmpptr = tmp + fakechroot_base_len;
+            linksize -= fakechroot_base_len;
+        }
+        else {
+            tmpptr = tmp;
+        }
+        if (strlen(tmpptr) > bufsiz) {
+            linksize = bufsiz;
+        }
+        strncpy(buf, tmpptr, linksize);
+    }
+    else {
+        strncpy(buf, tmp, linksize);
+    }
+    return linksize;
+}
+

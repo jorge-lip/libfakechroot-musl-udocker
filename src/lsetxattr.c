@@ -29,7 +29,7 @@
 wrapper(lsetxattr, int, (const char * path, const char * name, const void * value, size_t size, int flags))
 {
     debug("lsetxattr(\"%s\", \"%s\", &value, %zd, %d)", path, name, size, flags);
-    expand_chroot_path(path);
+    l_expand_chroot_path(path);
     return nextcall(lsetxattr)(path, name, value, size, flags);
 }
 

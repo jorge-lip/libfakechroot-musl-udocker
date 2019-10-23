@@ -28,7 +28,7 @@
 wrapper(lremovexattr, int, (const char * path, const char * name))
 {
     debug("lremovexattr(\"%s\", \"%s\")", path, name);
-    expand_chroot_path(path);
+    l_expand_chroot_path(path);
     return nextcall(lremovexattr)(path, name);
 }
 

@@ -20,7 +20,11 @@
 
 #include <config.h>
 
+/*
 #if defined(HAVE_LSTAT64) && !defined(HAVE___LXSTAT64)
+*/
+
+#if defined(HAVE_LSTAT64)
 
 #define _LARGEFILE64_SOURCE
 #define _BSD_SOURCE
@@ -32,27 +36,31 @@
 
 #include "libfakechroot.h"
 
+#ifdef lstat64
+#undef lstat64
+#endif
 
 wrapper(lstat64, int, (const char * file_name, struct stat64 * buf))
 {
-    char *fakechroot_path, fakechroot_buf[FAKECHROOT_PATH_MAX], tmp[FAKECHROOT_PATH_MAX];
-    char resolved[FAKECHROOT_PATH_MAX];
     int retval;
-    READLINK_TYPE_RETURN status;
     const char *orig;
 
     debug("lstat64(\"%s\", &buf)", file_name);
 
+    /*
+    char resolved[FAKECHROOT_PATH_MAX];
     if (rel2abs(file_name, resolved) == NULL) {
         return -1;
     }
-
     file_name = resolved;
+    */
 
     orig = file_name;
-    expand_chroot_path(file_name);
+    l_expand_chroot_path(file_name);
     retval = nextcall(lstat64)(file_name, buf);
     /* deal with http://bugs.debian.org/561991 */
+    char tmp[FAKECHROOT_PATH_MAX];
+    READLINK_TYPE_RETURN status;
     if ((buf->st_mode & S_IFMT) == S_IFLNK)
         if ((status = readlink(orig, tmp, sizeof(tmp)-1)) != -1)
             buf->st_size = status;

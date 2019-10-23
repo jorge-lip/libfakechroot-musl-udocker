@@ -59,6 +59,8 @@ LOCAL char * rel2absat(int dirfd, const char * name, char * resolved)
         if (! getcwd(cwd, FAKECHROOT_PATH_MAX)) {
             goto error;
         }
+        /* Indigo udocker */
+        udocker_host_narrow_chroot_path(cwd);
         snprintf(resolved, FAKECHROOT_PATH_MAX, "%s/%s", cwd, name);
     } else {
         if ((cwdfd = nextcall(open)(".", O_RDONLY|O_DIRECTORY)) == -1) {
@@ -76,6 +78,8 @@ LOCAL char * rel2absat(int dirfd, const char * name, char * resolved)
         }
         (void)close(cwdfd);
 
+        /* Indigo udocker */
+        udocker_host_narrow_chroot_path(cwd);
         snprintf(resolved, FAKECHROOT_PATH_MAX, "%s/%s", cwd, name);
     }
 

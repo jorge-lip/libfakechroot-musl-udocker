@@ -67,6 +67,7 @@ wrapper(bind, int, (int sockfd, BIND_TYPE_ARG2(addr), socklen_t addrlen))
         }
 
         if (strlen(path) >= sizeof(addr_un->sun_path)) {
+            debug("bind() ERROR: socket name toolong %s", path);
             __set_errno(ENAMETOOLONG);
             return -1;
         }

@@ -26,6 +26,6 @@
 wrapper(unlink, int, (const char * pathname))
 {
     debug("unlink(\"%s\")", pathname);
-    expand_chroot_path(pathname);
+    l_expand_chroot_path(pathname);
     return nextcall(unlink)(pathname);
 }

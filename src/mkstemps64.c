@@ -30,6 +30,9 @@
 #include "libfakechroot.h"
 #include "strlcpy.h"
 
+#ifdef mkstemps64
+#undef mkstemps64
+#endif
 
 wrapper(mkstemps64, int, (char * template, int suffixlen))
 {

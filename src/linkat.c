@@ -22,7 +22,10 @@
 
 #ifdef HAVE_LINKAT
 
+#include <fcntl.h>
+/*
 #define _ATFILE_SOURCE
+*/
 #include "libfakechroot.h"
 
 
@@ -30,7 +33,12 @@ wrapper(linkat, int, (int olddirfd, const char * oldpath, int newdirfd, const ch
 {
     char tmp[FAKECHROOT_PATH_MAX];
     debug("linkat(%d, \"%s\", %d, \"%s\", %d)", olddirfd, oldpath, newdirfd, newpath, flags);
-    expand_chroot_path_at(olddirfd, oldpath);
+    if (flags & AT_SYMLINK_FOLLOW) {
+        expand_chroot_path_at(olddirfd, oldpath);
+    }
+    else {
+        l_expand_chroot_path_at(olddirfd, oldpath);
+    }
     strcpy(tmp, oldpath);
     oldpath = tmp;
     expand_chroot_path_at(newdirfd, newpath);

@@ -20,7 +20,9 @@
 
 #include <config.h>
 
+/*
 #ifndef HAVE___XSTAT
+*/
 
 #define _BSD_SOURCE
 #define _DEFAULT_SOURCE
@@ -38,6 +40,8 @@ wrapper(stat, int, (const char * file_name, struct stat * buf))
     return nextcall(stat)(file_name, buf);
 }
 
+/*
 #else
 typedef int empty_translation_unit;
 #endif
+*/

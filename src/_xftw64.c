@@ -31,7 +31,8 @@ static int (* _xftw64_fn_saved)(const char * file, const struct stat * sb, int f
 
 static int _xftw64_fn_wrapper (const char * file, const struct stat * sb, int flag)
 {
-    narrow_chroot_path(file);
+/*    narrow_chroot_path(file);*/
+    udocker_host_narrow_chroot_path(file);
     return _xftw64_fn_saved(file, sb, flag);
 }
 

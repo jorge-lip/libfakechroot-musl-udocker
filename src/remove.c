@@ -26,6 +26,6 @@
 wrapper(remove, int, (const char * pathname))
 {
     debug("remove(\"%s\")", pathname);
-    expand_chroot_path(pathname);
+    l_expand_chroot_path(pathname);
     return nextcall(remove)(pathname);
 }

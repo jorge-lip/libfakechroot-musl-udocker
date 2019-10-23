@@ -24,13 +24,19 @@
 
 #define _ATFILE_SOURCE
 #include <unistd.h>
+#include <fcntl.h>
 #include "libfakechroot.h"
 
 
 wrapper(faccessat, int, (int dirfd, const char * pathname, int mode, int flags))
 {
     debug("faccessat(%d, \"%s\", %d, %d)", dirfd, pathname, mode, flags);
-    expand_chroot_path_at(dirfd, pathname);
+    if (flags & AT_SYMLINK_NOFOLLOW) {
+    	l_expand_chroot_path_at(dirfd, pathname);
+    }
+    else {
+    	expand_chroot_path_at(dirfd, pathname);
+    }
     return nextcall(faccessat)(dirfd, pathname, mode, flags);
 }
 

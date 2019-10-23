@@ -19,6 +19,7 @@
 
 
 #include <config.h>
+#include <fcntl.h>
 
 #ifdef HAVE___OPENAT64_2
 
@@ -30,7 +31,12 @@
 wrapper(__openat64_2, int, (int dirfd, const char * pathname, int flags))
 {
     debug("__openat64_2(%d, \"%s\", %d)", dirfd, pathname, flags);
-    expand_chroot_path_at(dirfd, pathname);
+    if (flags & O_NOFOLLOW) {
+        l_expand_chroot_path_at(dirfd, pathname);
+    }
+    else {
+        expand_chroot_path_at(dirfd, pathname);
+    }
     return nextcall(__openat64_2)(dirfd, pathname, flags);
 }
 

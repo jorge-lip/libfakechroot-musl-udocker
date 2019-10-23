@@ -40,6 +40,9 @@
 # define _LARGEFILE64_SOURCE
 # include "__lxstat64.h"
 # define STAT_T stat64
+# ifndef _STAT_VER
+#  define _STAT_VER 1
+# endif
 # define LSTAT_REL(rpath, st) __lxstat64_rel(_STAT_VER, rpath, st)
 #else
 # include "lstat.h"

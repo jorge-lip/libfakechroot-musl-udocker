@@ -26,8 +26,11 @@
 #include <sys/statvfs.h>
 #include "libfakechroot.h"
 
+#ifdef statvfs64
+#undef statvfs64
+#endif
 
-wrapper(statvfs64, int, (const char * path, struct statvfs64 * buf))
+wrapper(statvfs64, int, (const char * path, struct statvfs * buf))
 {
     debug("statvfs64(\"%s\", &buf)", path);
     expand_chroot_path(path);

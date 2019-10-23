@@ -26,6 +26,9 @@
 #include <dirent.h>
 #include "libfakechroot.h"
 
+#ifdef scandir64
+#undef scandir64
+#endif
 
 wrapper(scandir64, int, (const char * dir, struct dirent64 *** namelist, SCANDIR64_TYPE_ARG3(filter), SCANDIR64_TYPE_ARG4(compar)))
 {

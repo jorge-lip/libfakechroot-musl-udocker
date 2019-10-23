@@ -30,7 +30,7 @@
 wrapper(llistxattr, ssize_t, (const char *path, char *list, size_t size))
 {
     debug("llistxattr(\"%s\", &list, %zd)", path, list);
-    expand_chroot_path(path);
+    l_expand_chroot_path(path);
     return nextcall(llistxattr)(path, list, size);
 }
 

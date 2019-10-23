@@ -26,4 +26,6 @@
 
 wrapper_proto(readlink, READLINK_TYPE_RETURN, (const char *, char *, READLINK_TYPE_ARG3()));
 
+LOCAL
+READLINK_TYPE_RETURN udocker_readlink(const char * path, char * buf, READLINK_TYPE_ARG3(bufsiz));
 #endif

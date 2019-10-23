@@ -24,13 +24,19 @@
 
 #define _ATFILE_SOURCE
 #include <sys/time.h>
+#include <fcntl.h>
 #include "libfakechroot.h"
 
 
 wrapper(utimensat, int, (int dirfd, const char * pathname, const struct timespec times [2], int flags))
 {
     debug("utimeat(%d, \"%s\", &buf, %d)", dirfd, pathname, flags);
-    expand_chroot_path_at(dirfd, pathname);
+    if (flags & AT_SYMLINK_NOFOLLOW) {
+        l_expand_chroot_path_at(dirfd, pathname);
+    }
+    else {
+        expand_chroot_path_at(dirfd, pathname);
+    }
     return nextcall(utimensat)(dirfd, pathname, times, flags);
 }
 

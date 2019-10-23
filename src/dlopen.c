@@ -32,5 +32,6 @@ wrapper(dlopen, void *, (const char * filename, int flag))
         expand_chroot_path(filename);
         debug("dlopen(\"%s\", %d)", filename, flag);
     }
+
     return nextcall(dlopen)(filename, flag);
 }

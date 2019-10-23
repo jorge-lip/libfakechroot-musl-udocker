@@ -32,6 +32,7 @@ wrapper(getcwd, char *, (char * buf, size_t size))
     if ((cwd = nextcall(getcwd)(buf, size)) == NULL) {
         return NULL;
     }
-    narrow_chroot_path(cwd);
+/*    narrow_chroot_path(cwd);*/
+    udocker_host_narrow_chroot_path(cwd);
     return cwd;
 }

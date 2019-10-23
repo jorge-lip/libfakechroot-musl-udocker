@@ -28,7 +28,9 @@
 wrapper(chdir, int, (const char * path))
 {
     char cwd[FAKECHROOT_PATH_MAX];
+    /*
     const char *fakechroot_base = getenv("FAKECHROOT_BASE");
+    */
 
     debug("chdir(\"%s\")", path);
 
@@ -36,7 +38,8 @@ wrapper(chdir, int, (const char * path))
         return -1;
     }
     if (fakechroot_base != NULL) {
-        if (strstr(cwd, fakechroot_base) == path) {
+/*        if (strstr(cwd, fakechroot_base) == path) {*/
+        if (strstr(cwd, fakechroot_base) != cwd) {
             expand_chroot_path(path);
         }
         else {

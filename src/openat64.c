@@ -29,23 +29,37 @@
 #include <fcntl.h>
 #include "libfakechroot.h"
 
+#ifdef openat64
+#undef openat64
+#endif
 
 wrapper_alias(openat64, int, (int dirfd, const char * pathname, int flags, ...))
 {
     int mode = 0;
+    int fd;
 
     va_list arg;
     va_start(arg, flags);
 
     debug("openat64(%d, \"%s\", %d, ...)", dirfd, pathname, flags);
-    expand_chroot_path_at(dirfd, pathname);
+    if (flags & O_NOFOLLOW) {
+        l_expand_chroot_path_at(dirfd, pathname);
+    }
+    else {
+        expand_chroot_path_at(dirfd, pathname);
+    }
 
     if (flags & O_CREAT) {
         mode = va_arg(arg, int);
         va_end(arg);
     }
 
-    return nextcall(openat64)(dirfd, pathname, flags, mode);
+    fd = nextcall(openat64)(dirfd, pathname, flags, mode);
+    /* udocker */
+    if (fd != -1 && flags & (O_CREAT | O_WRONLY))
+        fakechroot_addwlib(fd, 0);
+
+    return fd;
 }
 
 #else

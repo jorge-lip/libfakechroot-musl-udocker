@@ -17,6 +17,8 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
 */
 
+#define _GNU_SOURCE
+
 #include <config.h>
 
 #include "libfakechroot.h"
@@ -74,7 +76,7 @@ static int __add_to_environ(const char *name, const char *value,
 
         /* We have to get the pointer now that we have the lock and not earlier
            since another thread might have created a new environment.  */
-        ep = __environ;
+        ep = environ;
 
         size = 0;
         if (ep != NULL) {
@@ -98,10 +100,10 @@ static int __add_to_environ(const char *name, const char *value,
                 __set_errno(ENOMEM);
                 goto DONE;
         }
-        if (__environ != last_environ) {
-                memcpy(new_environ, __environ, size * sizeof(char *));
+        if (environ != last_environ) {
+                memcpy(new_environ, environ, size * sizeof(char *));
         }
-        last_environ = __environ = new_environ;
+        last_environ = environ = new_environ;
 
         ep = &new_environ[size];
         /* Ensure env is NULL terminated in case malloc below fails */
@@ -152,7 +154,7 @@ LOCAL int __unsetenv(const char *name)
         }
         len = eq - name; /* avoiding strlen this way */
 
-        ep = __environ;
+        ep = environ;
         /* NB: clearenv(); unsetenv("foo"); should not segfault */
         if (ep) while (*ep != NULL) {
                 if (!strncmp(*ep, name, len) && (*ep)[len] == '=') {
@@ -180,7 +182,7 @@ LOCAL int __clearenv(void)
         free(last_environ);
         last_environ = NULL;
         /* Clearing environ removes the whole environment.  */
-        __environ = NULL;
+        environ = NULL;
         return 0;
 }
 

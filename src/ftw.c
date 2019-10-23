@@ -177,6 +177,15 @@ int rpl_lstat (const char *, struct stat *);
 # define __set_errno(Val) errno = (Val)
 #endif
 
+
+/* udocker */
+typedef int (*__ftw_func_t) (const char *__filename,
+                             const struct stat *__status, int __flag);
+typedef int (*__nftw_func_t) (const char *__filename,
+                              const struct stat *__status, int __flag,
+                              struct FTW *__info);
+
+
 /* Support for the LFS API version.  */
 #ifndef FTW_NAME
 # define FTW_NAME ftw
@@ -522,9 +531,6 @@ process_entry (struct ftw_data *data, struct dir_data *dir, const char *name,
                                 &data->ftw);
     }
 
-  if ((data->flags & FTW_ACTIONRETVAL) && result == FTW_SKIP_SUBTREE)
-    result = 0;
-
   return result;
 }
 
@@ -634,9 +640,6 @@ fail:
       __set_errno (save_err);
     }
 
-  if ((data->flags & FTW_ACTIONRETVAL) && result == FTW_SKIP_SIBLINGS)
-    result = 0;
-
   /* Prepare the return, revert the `struct FTW' information.  */
   data->dirbuf[data->ftw.base - 1] = '\0';
   --data->ftw.level;
@@ -648,9 +651,7 @@ fail:
 
   if (old_dir
       && (data->flags & FTW_CHDIR)
-      && (result == 0
-          || ((data->flags & FTW_ACTIONRETVAL)
-              && (result != -1 && result != FTW_STOP))))
+      && (result == 0))
     {
       /* Change back to the parent directory.  */
       int done = 0;
@@ -830,9 +831,6 @@ ftw_startup (const char *dir, int is_nftw, void *func, int descriptors,
             }
         }
 
-      if ((flags & FTW_ACTIONRETVAL)
-          && (result == FTW_SKIP_SUBTREE || result == FTW_SKIP_SIBLINGS))
-        result = 0;
     }
 
   /* Return to the start directory (if necessary).  */
@@ -902,7 +900,7 @@ NFTW_NEW_NAME (path, func, descriptors, flags)
 {
   debug(NFTW_NEW_NAME_STRING "(\"%s\", &func, %d, %d)", path, descriptors, flags);
   if (flags
-      & ~(FTW_PHYS | FTW_MOUNT | FTW_CHDIR | FTW_DEPTH | FTW_ACTIONRETVAL))
+      & ~(FTW_PHYS | FTW_MOUNT | FTW_CHDIR | FTW_DEPTH ))
     {
       __set_errno (EINVAL);
       return -1;

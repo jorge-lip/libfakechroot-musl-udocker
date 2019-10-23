@@ -16,7 +16,7 @@
     License along with this library; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
 */
-
+#include <stdio.h>
 
 #include <config.h>
 
@@ -29,17 +29,27 @@
 wrapper_alias(open, int, (const char * pathname, int flags, ...))
 {
     int mode = 0;
+    int fd;
 
     va_list arg;
     va_start(arg, flags);
 
     debug("open(\"%s\", %d, ...)", pathname, flags);
-    expand_chroot_path(pathname);
+    if (flags & O_NOFOLLOW) {
+        l_expand_chroot_path(pathname);
+    }
+    else {
+        expand_chroot_path(pathname);
+    }
 
     if (flags & O_CREAT) {
         mode = va_arg(arg, int);
         va_end(arg);
     }
+    fd = nextcall(open)(pathname, flags, mode);
+    /* udocker */
+    if (fd != -1 && flags & (O_CREAT | O_WRONLY))
+        fakechroot_addwlib(fd, (char *) pathname);
 
-    return nextcall(open)(pathname, flags, mode);
+    return fd;
 }

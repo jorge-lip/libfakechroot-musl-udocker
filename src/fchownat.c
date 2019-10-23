@@ -25,13 +25,19 @@
 #define _ATFILE_SOURCE
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 #include "libfakechroot.h"
 
 
 wrapper(fchownat, int, (int dirfd, const char * path, uid_t owner, gid_t group, int flag))
 {
     debug("fchownat(%d, \"%s\", %d, %d, %d)", dirfd, path, owner, group, flag);
-    expand_chroot_path_at(dirfd, path);
+    if (flag & AT_SYMLINK_NOFOLLOW) {
+    	l_expand_chroot_path_at(dirfd, path);
+    }
+    else {
+    	expand_chroot_path_at(dirfd, path);
+    }
     return nextcall(fchownat)(dirfd, path, owner, group, flag);
 }
 

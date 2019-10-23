@@ -61,8 +61,13 @@ wrapper(posix_spawn, int, (pid_t* pid, const char * filename,
     size_t sizeenvp;
     char c;
 
+    char *fakechroot_base = fakechroot_preserve_getenv("FAKECHROOT_BASE");
     char *elfloader = getenv("FAKECHROOT_ELFLOADER");
     char *elfloader_opt_argv0 = getenv("FAKECHROOT_ELFLOADER_OPT_ARGV0");
+    char *fakechroot_disallow_env_changes = fakechroot_preserve_getenv("FAKECHROOT_DISALLOW_ENV_CHANGES");
+    char *fakechroot_library_orig = fakechroot_preserve_getenv("FAKECHROOT_LIBRARY_ORIG");
+    int ld_library_real_pos = -1;
+
 
     if (elfloader && !*elfloader) elfloader = NULL;
     if (elfloader_opt_argv0 && !*elfloader_opt_argv0) elfloader_opt_argv0 = NULL;
@@ -102,13 +107,13 @@ wrapper(posix_spawn, int, (pid_t* pid, const char * filename,
     /* Preserve old environment variables if not overwritten by new */
     for (j = 0; j < preserve_env_list_count; j++) {
         key = preserve_env_list[j];
-        env = getenv(key);
+        env = fakechroot_preserve_getenv(key);
         if (env != NULL && *env) {
             if (do_cmd_subst && strcmp(key, "FAKECHROOT_BASE") == 0) {
                 key = "FAKECHROOT_BASE_ORIG";
                 is_base_orig = 1;
             }
-            if (envp) {
+            if (envp && !fakechroot_disallow_env_changes) {
                 for (ep = (char **) envp; *ep != NULL; ++ep) {
                     strncpy(tmpkey, *ep, 1024);
                     tmpkey[1023] = 0;
@@ -121,6 +126,8 @@ wrapper(posix_spawn, int, (pid_t* pid, const char * filename,
                 }
             }
             newenvp[newenvppos] = malloc(strlen(key) + strlen(env) + 3);
+            if (strcmp(key, "LD_LIBRARY_REAL") == 0)
+                ld_library_real_pos = newenvppos;
             strcpy(newenvp[newenvppos], key);
             strcat(newenvp[newenvppos], "=");
             strcat(newenvp[newenvppos], env);
@@ -136,11 +143,41 @@ wrapper(posix_spawn, int, (pid_t* pid, const char * filename,
             tmpkey[1023] = 0;
             if ((tp = strchr(tmpkey, '=')) != NULL) {
                 *tp = 0;
+                for (j=0; j < newenvppos; j++) {  /* ignoore env vars already added */
+                    if (strncmp(newenvp[j], tmpkey, strlen(tmpkey)) == 0) {
+                        goto skip2;
+                    }
+                }
                 if (strcmp(tmpkey, "FAKECHROOT") == 0 ||
                     (is_base_orig && strcmp(tmpkey, "FAKECHROOT_BASE") == 0))
                 {
                     goto skip2;
                 }
+                /* broken */
+                if (fakechroot_library_orig && ld_library_real_pos != -1 && *(tp+1) != '\0' &&
+                       strcmp(tmpkey, "LD_LIBRARY_PATH") == 0) {
+                    int newsize, count = 1;
+                    char *dir, *iter, *ld_library_real;
+                    for (iter = *ep + (tp - tmpkey) + 1; *iter; iter++)
+                        if ( *iter == ':') count++; 
+                    newsize = sizeof("LD_LIBRARY_REAL=") + strlen(fakechroot_library_orig) +
+                              strlen(tp+1) + (count * (strlen(fakechroot_base) + 1)) + 4;
+                    free(newenvp[ld_library_real_pos]);
+                    ld_library_real = newenvp[ld_library_real_pos] = malloc(newsize);
+                    strcpy(ld_library_real, "LD_LIBRARY_REAL=");
+                    for (iter = dir = *ep + (tp - tmpkey) + 1; *iter ; iter++) {
+                        if (*iter == ':' || *(iter + 1) == 0) {
+                            if (*iter == ':') *iter = 0; 
+                            strcat(ld_library_real, fakechroot_base);
+                            strcat(ld_library_real, "/");
+                            strcat(ld_library_real, dir);
+                            strcat(ld_library_real, ":");
+                            dir = iter + 1; 
+                        }
+                    }
+                    strcat(ld_library_real, fakechroot_library_orig);
+                }
+
             }
             newenvp[newenvppos] = *ep;
             newenvppos++;
@@ -167,6 +204,10 @@ wrapper(posix_spawn, int, (pid_t* pid, const char * filename,
     /* Exec substituded command */
     if (do_cmd_subst) {
         debug("nextcall(posix_spawn)(\"%s\", {\"%s\", ...}, {\"%s\", ...})", substfilename, argv[0], newenvp[0]);
+
+        /* Indigo udocker */
+        fakechroot_upatch_elf(substfilename);
+
         status = nextcall(posix_spawn)(pid, substfilename, file_actions, attrp, (char * const *)argv, newenvp);
         goto error;
     }
@@ -188,8 +229,12 @@ wrapper(posix_spawn, int, (pid_t* pid, const char * filename,
         return errno;
     }
 
-    /* No hashbang in argv */
-    if (hashbang[0] != '#' || hashbang[1] != '!') {
+    /* ELF binary */
+    if (hashbang[0] == 127 && hashbang[1] == 'E' && hashbang[2] == 'L' && hashbang[3] == 'F') {
+
+        /* Indigo udocker */
+        fakechroot_upatch_elf(filename);
+
         if (!elfloader) {
             status = nextcall(posix_spawn)(pid, filename, file_actions, attrp, argv, newenvp);
             goto error;
@@ -215,25 +260,39 @@ wrapper(posix_spawn, int, (pid_t* pid, const char * filename,
         goto error;
     }
 
+    /* Indigo udocker fix spaces before #! */
+    for(j = 0; hashbang[j] == ' ' && j < 16; j++);
+    if (j) memmove(hashbang, hashbang + j, i);
+
     /* For hashbang we must fix argv[0] */
-    hashbang[i] = hashbang[i+1] = 0;
-    for (i = j = 2; (hashbang[i] == ' ' || hashbang[i] == '\t') && i < FAKECHROOT_PATH_MAX; i++, j++);
-    for (n = 0; i < FAKECHROOT_PATH_MAX; i++) {
-        c = hashbang[i];
-        if (hashbang[i] == 0 || hashbang[i] == ' ' || hashbang[i] == '\t' || hashbang[i] == '\n') {
-            hashbang[i] = 0;
-            if (i > j) {
-                if (n == 0) {
-                    ptr = &hashbang[j];
-                    expand_chroot_path(ptr);
-                    strcpy(newfilename, ptr);
+    if (hashbang[0] == '#' && hashbang[1] == '!') {
+        hashbang[i] = hashbang[i+1] = 0;
+        for (i = j = 2; (hashbang[i] == ' ' || hashbang[i] == '\t') && i < FAKECHROOT_PATH_MAX; i++, j++);
+        for (n = 0; i < FAKECHROOT_PATH_MAX; i++) {
+            c = hashbang[i];
+            if (hashbang[i] == 0 || hashbang[i] == ' ' || hashbang[i] == '\t' || hashbang[i] == '\n') {
+                hashbang[i] = 0;
+                if (i > j) {
+                    if (n == 0) {
+                        ptr = &hashbang[j];
+                        expand_chroot_path(ptr);
+                        strcpy(newfilename, ptr);
+                    }
+                    newargv[n++] = &hashbang[j];
                 }
-                newargv[n++] = &hashbang[j];
+                j = i + 1;
             }
-            j = i + 1;
+            if (c == '\n' || c == 0)
+                break;
         }
-        if (c == '\n' || c == 0)
-            break;
+    }
+    else {    /* default old behavior no hashbang in first line is shell */
+        char *ptr2;
+        ptr = ptr2 = "/bin/sh";
+        expand_chroot_path(ptr);
+        strcpy(newfilename, ptr);
+        n = 0;
+        newargv[n++] = ptr2;
     }
 
     newargv[n++] = argv0;
@@ -241,6 +300,9 @@ wrapper(posix_spawn, int, (pid_t* pid, const char * filename,
     for (i = 1; argv[i] != NULL && i < argv_max; ) {
         newargv[n++] = argv[i++];
     }
+
+    /* Indigo udocker */
+    fakechroot_upatch_elf(newfilename);
 
     newargv[n] = 0;
 
@@ -265,6 +327,7 @@ wrapper(posix_spawn, int, (pid_t* pid, const char * filename,
         newargv[n++] = argv0;
     }
     newargv[n] = newfilename;
+
     debug("nextcall(posix_spawn)(\"%s\", {\"%s\", \"%s\", \"%s\", ...}, {\"%s\", ...})", elfloader, newargv[0], newargv[1], newargv[n], newenvp[0]);
     status = nextcall(posix_spawn)(pid, elfloader, file_actions, attrp, (char * const *)newargv, newenvp);
 

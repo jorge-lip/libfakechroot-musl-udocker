@@ -24,10 +24,15 @@
 
 #define _LARGEFILE64_SOURCE
 #include <sys/statfs.h>
+
+#ifdef statfs64
+#undef statfs64
+#endif
+
 #include "libfakechroot.h"
 
 
-wrapper(statfs64, int, (const char * path, struct statfs64 * buf))
+wrapper(statfs64, int, (const char * path, struct statfs * buf))
 {
     debug("statfs64(\"%s\", &buf)", path);
     expand_chroot_path(path);

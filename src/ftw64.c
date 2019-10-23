@@ -18,16 +18,33 @@
    Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
    02111-1307 USA.  */
 
+/* udocker */                                                                                   
+#ifdef _LIBC
+# include <include/sys/stat.h>
+#else   
+# include <sys/stat.h>
+#endif
+
+#include <ftw.h>
+
+typedef int (*__ftw64_func_t) (const char *__filename,                                          
+                               const struct stat *__status, int __flag);                      
+typedef int (*__nftw64_func_t) (const char *__filename,                   
+                                const struct stat *__status,            
+                                int __flag, struct FTW *__info);          
+
+
+
 #define __FTW64_C
 #define FTW_NAME ftw64
 #define NFTW_NAME nftw64
 #define NFTW_OLD_NAME __old_nftw64
 #define NFTW_NEW_NAME __new_nftw64
 #define INO_T ino64_t
-#define STAT stat64
-#define LXSTAT __lxstat64
-#define XSTAT __xstat64
-#define FXSTATAT __fxstatat64
+#define STAT stat
+#define LXSTAT(V,f,sb) lstat (f,sb)
+#define XSTAT(V,f,sb) stat (f,sb)                                            
+#define FXSTATAT(V,d,f,sb,m) fstatat (d, f, sb, m)       
 #define FTW_FUNC_T __ftw64_func_t
 #define NFTW_FUNC_T __nftw64_func_t
 

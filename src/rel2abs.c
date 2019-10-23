@@ -46,13 +46,16 @@ LOCAL char * rel2abs(const char * name, char * resolved)
         goto end;
     }
 
-    getcwd_real(cwd, FAKECHROOT_PATH_MAX);
-    narrow_chroot_path(cwd);
 
     if (*name == '/') {
         strlcpy(resolved, name, FAKECHROOT_PATH_MAX);
+        /* Indigo udocker */
+        narrow_chroot_path(resolved);
     }
     else {
+        getcwd_real(cwd, FAKECHROOT_PATH_MAX);
+        /* Indigo udocker */
+        udocker_host_narrow_chroot_path(cwd);
         snprintf(resolved, FAKECHROOT_PATH_MAX, "%s/%s", cwd, name);
     }
 

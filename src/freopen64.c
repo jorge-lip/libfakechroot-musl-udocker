@@ -24,14 +24,27 @@
 
 #define _LARGEFILE64_SOURCE
 #include <stdio.h>
+#include <string.h>
 #include "libfakechroot.h"
 
+#ifdef freopen64
+#undef freopen64
+#endif
 
 wrapper(freopen64, FILE *, (const char *path, const char *mode, FILE *stream))
 {
+    FILE *fp;
+    int fd;
+
     debug("freopen64(\"%s\", \"%s\", &stream)", path, mode);
     expand_chroot_path(path);
-    return nextcall(freopen64)(path, mode, stream);
+    fp = nextcall(freopen64)(path, mode, stream);
+
+    /* udocker */
+    if (fp && mode && (fd = fileno(fp)) != -1 && strstr(mode, "w"))
+        fakechroot_addwlib(fd, (char *) path);
+
+    return fp;
 }
 
 #else

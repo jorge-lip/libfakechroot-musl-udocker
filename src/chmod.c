@@ -22,12 +22,18 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 #include "libfakechroot.h"
 
 
 wrapper(chmod, int, (const char * path, mode_t mode))
 {
     debug("chmod(\"%s\", 0%o)", path, mode);
-    expand_chroot_path(path);
+    if (mode & AT_SYMLINK_NOFOLLOW) {
+    	l_expand_chroot_path(path);
+    }
+    else {
+    	expand_chroot_path(path);
+    }
     return nextcall(chmod)(path, mode);
 }

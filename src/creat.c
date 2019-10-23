@@ -23,12 +23,18 @@
 #define _ATFILE_SOURCE
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 #include "libfakechroot.h"
 
 
 wrapper(creat, int, (const char * pathname, mode_t mode))
 {
     debug("creat(\"%s\", 0%o)", pathname, mode);
-    expand_chroot_path(pathname);
+    if (mode & O_NOFOLLOW) {
+	    l_expand_chroot_path(pathname);
+    }
+    else {
+	    expand_chroot_path(pathname);
+    }
     return nextcall(creat)(pathname, mode);
 }

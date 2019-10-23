@@ -19,6 +19,7 @@
 
 
 #include <config.h>
+#include <fcntl.h>
 
 #ifdef HAVE___OPEN_2
 
@@ -29,7 +30,12 @@
 wrapper(__open_2, int, (const char * pathname, int flags))
 {
     debug("__open_2(\"%s\", %d)", pathname, flags);
-    expand_chroot_path(pathname);
+    if (flags & O_NOFOLLOW) {
+        l_expand_chroot_path(pathname);
+    }
+    else {
+        expand_chroot_path(pathname);
+    }
     return nextcall(__open_2)(pathname, flags);
 }
 

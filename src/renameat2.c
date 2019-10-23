@@ -20,25 +20,21 @@
 
 #include <config.h>
 
-#ifdef HAVE_FCHMODAT
+#ifdef HAVE_RENAMEAT2
 
 #define _ATFILE_SOURCE
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 #include "libfakechroot.h"
 
 
-wrapper(fchmodat, int, (int dirfd, const char * path, mode_t mode, int flag))
+wrapper(renameat2, int, (int olddirfd, const char * oldpath, int newdirfd, const char * newpath, unsigned int flags))
 {
-    debug("fchmodat(%d, \"%s\", 0%o, %d)", dirfd, path, mode, flag);
-    if (flag & AT_SYMLINK_NOFOLLOW) {
-    	l_expand_chroot_path_at(dirfd, path);
-    }
-    else {
-    	expand_chroot_path_at(dirfd, path);
-    }
-    return nextcall(fchmodat)(dirfd, path, mode, flag);
+    char tmp[FAKECHROOT_PATH_MAX];
+    debug("renameat2(%d, \"%s\", %d, \"%s\", %d)", olddirfd, oldpath, newdirfd, newpath, flags);
+    l_expand_chroot_path_at(olddirfd, oldpath);
+    strcpy(tmp, oldpath);
+    oldpath = tmp;
+    l_expand_chroot_path_at(newdirfd, newpath);
+    return nextcall(renameat2)(olddirfd, oldpath, newdirfd, newpath, flags);
 }
 
 #else
