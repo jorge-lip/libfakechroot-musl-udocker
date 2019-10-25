@@ -38,6 +38,8 @@
 #define debug(fmt, ...) fprintf(stderr, fmt, __VA_ARGS__); fputc('\n', stderr);
 #endif
 
+#define func_to_name(call) (#call)
+
 static int    patch_init = 0;
 static time_t patch_last_time = 0;
 
@@ -67,7 +69,7 @@ static int    set_rpath_len = sizeof(set_rpath) -1;
 int           (*next_execve)(const char *, char *const [], char *const []);
 char        * (*next_realpath)(const char *, char *);
 ssize_t       (*next_readlink)(const char *, char *, size_t);
-int           (*next_stat)(const char *, struct stat *);
+int           (*next_xstat)(int vers, const char *, struct stat *);
 
 /* track changes to sharable libraries */
 #define MAPWLIB_SIZE 64
@@ -80,9 +82,9 @@ fakechroot_patch_loadfuncs()
 {
 
 #ifdef STANDALONE
-    if (! (next_realpath = dlsym(RTLD_DEFAULT, "realpath"))) {
+    if (! (next_realpath = dlsym(RTLD_DEFAULT, func_to_name(realpath)))) {
 #else
-    if (! (next_realpath = dlsym(RTLD_NEXT, "realpath"))) {
+    if (! (next_realpath = dlsym(RTLD_NEXT, func_to_name(realpath)))) {
 #endif
         char *msg;
         msg = dlerror();
@@ -91,9 +93,9 @@ fakechroot_patch_loadfuncs()
     }
 
 #ifdef STANDALONE
-    if (! (next_execve = dlsym(RTLD_DEFAULT, "execve"))) {
+    if (! (next_execve = dlsym(RTLD_DEFAULT, func_to_name(execve)))) {
 #else
-    if (! (next_execve = dlsym(RTLD_NEXT, "execve"))) {
+    if (! (next_execve = dlsym(RTLD_NEXT, func_to_name(execve)))) {
 #endif
         char *msg;
         msg = dlerror();
@@ -102,9 +104,9 @@ fakechroot_patch_loadfuncs()
     }
 
 #ifdef STANDALONE
-    if (! (next_readlink = dlsym(RTLD_DEFAULT, "readlink"))) {
+    if (! (next_readlink = dlsym(RTLD_DEFAULT, func_to_name(readlink)))) {
 #else
-    if (! (next_readlink = dlsym(RTLD_NEXT, "readlink"))) {
+    if (! (next_readlink = dlsym(RTLD_NEXT, func_to_name(readlink)))) {
 #endif
         char *msg;
         msg = dlerror();
@@ -113,9 +115,9 @@ fakechroot_patch_loadfuncs()
     }
 
 #ifdef STANDALONE
-    if (! (next_stat = dlsym(RTLD_DEFAULT, "stat"))) {
+    if (! (next_xstat = dlsym(RTLD_DEFAULT, func_to_name(__xstat)))) {
 #else
-    if (! (next_stat = dlsym(RTLD_NEXT, "stat"))) {
+    if (! (next_xstat = dlsym(RTLD_NEXT, func_to_name(__xstat)))) {
 #endif
         char *msg;
         msg = dlerror();
@@ -354,7 +356,7 @@ fakechroot_upatch_elf(const char *filename)
 
         if (patch_last_time) {
             struct stat fattr;
-            if (next_stat(filename, &fattr) == -1 || fattr.st_mtime < patch_last_time) {
+            if (next_xstat(0, filename, &fattr) == -1 || fattr.st_mtime < patch_last_time) {
                 return 0; 
             }
         }
