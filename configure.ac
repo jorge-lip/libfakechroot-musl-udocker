@@ -281,6 +281,7 @@ AC_CHECK_FUNCS(m4_normalize([
     utimensat
     utimes
     vfork
+    statx
 ]))
 AC_FUNC_ALLOCA
 ASX_NO_CROSS_COMPILING([AC_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK])
