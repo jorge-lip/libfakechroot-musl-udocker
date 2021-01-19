@@ -44,6 +44,10 @@
 #include "readlink.h"
 #include "dedotdot.h"
 
+char * fakechroot_base;
+size_t fakechroot_base_len;
+int    debug_level;
+
 int lib_init = 0;
 int fakechroot_disallow_env_changes = -1;
 char *fakechroot_expand_symlinks;

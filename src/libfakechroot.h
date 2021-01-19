@@ -31,9 +31,9 @@
 
 #define debug fakechroot_debug
 
-char * fakechroot_base;
-size_t fakechroot_base_len;
-int    debug_level;
+extern char * fakechroot_base;
+extern size_t fakechroot_base_len;
+extern int    debug_level;
 
 #ifdef HAVE___ATTRIBUTE__VISIBILITY
 # define LOCAL __attribute__((visibility("hidden")))
