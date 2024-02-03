@@ -322,9 +322,9 @@ LOCAL int fakechroot_try_cmd_subst (char * env, const char * filename, char * cm
     if (env == NULL || filename == NULL)
         return 0;
 
-    /* Remove trailing dot from filename */
-    if (filename[0] == '.' && filename[1] == '/')
-        filename++;
+    /* cleanup filename */
+    dedotdot(filename);
+
     len = strlen(filename);
 
     do {
