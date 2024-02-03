@@ -43,7 +43,6 @@ wrapper(posix_spawn, int, (pid_t* pid, const char * filename,
 {
     int status;
     int file;
-    int is_base_orig = 0;
     char hashbang[FAKECHROOT_PATH_MAX];
     size_t argv_max = 1024;
     const char **newargv = alloca(argv_max * sizeof (const char *));
@@ -109,9 +108,14 @@ wrapper(posix_spawn, int, (pid_t* pid, const char * filename,
         key = preserve_env_list[j];
         env = fakechroot_preserve_getenv(key);
         if (env != NULL && *env) {
-            if (do_cmd_subst && strcmp(key, "FAKECHROOT_BASE") == 0) {
-                key = "FAKECHROOT_BASE_ORIG";
-                is_base_orig = 1;
+            if (do_cmd_subst) { /* if cmd subst disable ENV to enable execution of host binaries*/
+                if (strcmp(key, "FAKECHROOT_BASE") == 0) {
+                    key = "FAKECHROOT_BASE_ORIG";
+                } else if (strcmp(key, "LD_PRELOAD") == 0) {
+                    key = "LD_PRELOAD_ORIG";
+                } else if (strcmp(key, "LD_LIBRARY_PATH") == 0) {
+                    key = "LD_LIBRARY_PATH_ORIG";
+                }
             }
             if (envp && !fakechroot_disallow_env_changes) {
                 for (ep = (char **) envp; *ep != NULL; ++ep) {
@@ -148,9 +152,11 @@ wrapper(posix_spawn, int, (pid_t* pid, const char * filename,
                         goto skip2;
                     }
                 }
+                /* if cmd subst disable ENV to enable execution of host binaries*/
                 if (strcmp(tmpkey, "FAKECHROOT") == 0 ||
-                    (is_base_orig && strcmp(tmpkey, "FAKECHROOT_BASE") == 0))
-                {
+                        (do_cmd_subst && strcmp(tmpkey, "FAKECHROOT_BASE") == 0) ||
+                        (do_cmd_subst && strcmp(tmpkey, "LD_PRELOAD") == 0)      ||
+                        (do_cmd_subst && strcmp(tmpkey, "LD_LIBRARY_PATH") == 0) ) {
                     goto skip2;
                 }
                 /* broken */
@@ -205,7 +211,14 @@ wrapper(posix_spawn, int, (pid_t* pid, const char * filename,
     if (do_cmd_subst) {
         debug("nextcall(posix_spawn)(\"%s\", {\"%s\", ...}, {\"%s\", ...})", substfilename, argv[0], newenvp[0]);
 
-        /* Indigo udocker */
+        /* if cmd subst is a placeholder like RETURN(TRUE) or RETURN(FALSE) just exit with 0 or 1 */
+        if (strcmp(substfilename, CMD_SUBST_RETURN_TRUE)) {
+            exit(0);
+        } else if (strcmp(substfilename, CMD_SUBST_RETURN_FALSE)) {
+            exit(1);
+        }
+
+        /* Indigo udocker dynamically patch executable used in mode F4 */
         fakechroot_upatch_elf(substfilename);
 
         status = nextcall(posix_spawn)(pid, substfilename, file_actions, attrp, (char * const *)argv, newenvp);
@@ -232,7 +245,7 @@ wrapper(posix_spawn, int, (pid_t* pid, const char * filename,
     /* ELF binary */
     if (hashbang[0] == 127 && hashbang[1] == 'E' && hashbang[2] == 'L' && hashbang[3] == 'F') {
 
-        /* Indigo udocker */
+        /* Indigo udocker dynamically patch executable used in mode F4 */
         fakechroot_upatch_elf(filename);
 
         if (!elfloader) {
@@ -301,7 +314,7 @@ wrapper(posix_spawn, int, (pid_t* pid, const char * filename,
         newargv[n++] = argv[i++];
     }
 
-    /* Indigo udocker */
+    /* Indigo udocker dynamically patch executable used in mode F4 */
     fakechroot_upatch_elf(newfilename);
 
     newargv[n] = 0;
