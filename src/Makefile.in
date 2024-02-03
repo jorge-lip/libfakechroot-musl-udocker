@@ -151,7 +151,7 @@ am_libfakechroot_la_OBJECTS = __fxstatat.lo __fxstatat64.lo \
 	chown.lo chroot.lo clearenv.lo close.lo connect.lo creat.lo \
 	creat64.lo dedotdot.lo dl_iterate_phdr.lo dladdr.lo dlmopen.lo \
 	dlopen.lo eaccess.lo euidaccess.lo execl.lo execle.lo \
-	execlp.lo execv.lo execve.lo execvp.lo faccessat.lo \
+	execlp.lo execv.lo execve.lo execvp.lo execvpe.lo faccessat.lo \
 	fchmodat.lo fchownat.lo fclose.lo fopen.lo fopen64.lo \
 	freopen.lo freopen64.lo fts.lo ftw.lo ftw64.lo futimesat.lo \
 	get_current_dir_name.lo getcwd.lo getcwd_real.lo \
@@ -439,6 +439,7 @@ libfakechroot_la_SOURCES = \
     execv.c \
     execve.c \
     execvp.c \
+    execvpe.c \
     faccessat.c \
     fchmodat.c \
     fchownat.c \
@@ -688,6 +689,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/execv.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/execve.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/execvp.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/execvpe.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/faccessat.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fchmodat.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fchownat.Plo@am__quote@
