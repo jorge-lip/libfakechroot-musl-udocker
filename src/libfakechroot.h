@@ -35,6 +35,9 @@ extern char * fakechroot_base;
 extern size_t fakechroot_base_len;
 extern int    debug_level;
 
+#define CMD_SUBST_RETURN_TRUE "#RETURN(TRUE)#"
+#define CMD_SUBST_RETURN_FALSE "#RETURN(FALSE)#"
+
 #ifdef HAVE___ATTRIBUTE__VISIBILITY
 # define LOCAL __attribute__((visibility("hidden")))
 #else
@@ -92,7 +95,7 @@ extern int    debug_level;
             if ((map_pos = fakechroot_ishostmapdir((path))) != -1) { \
                 char fakechroot_buf[FAKECHROOT_PATH_MAX]; \
                 if (fakechroot_getcontmapdir((path), map_pos, fakechroot_buf)) \
-                    memmove((void *)(path), fakechroot_buf, strlen(fakechroot_buf) + 1); \
+                    memcpy((void *)(path), fakechroot_buf, strlen(fakechroot_buf) + 1); \
             } \
             else { \
                 if (fakechroot_base != NULL) { \
