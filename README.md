@@ -14,6 +14,10 @@ use `chroot`(8) command without root privileges.  This is useful for allowing
 users to create own chrooted environment with possibility to install another
 packages without need for root privileges.
 
+udocker
+=======
+
+This fork of fakechroot is used in udocker a tool to execute linux containers.
 
 How does it work?
 =================
@@ -75,7 +79,11 @@ fakechroot is mainly used as:
 
 * a variant of [debootstrap](http://code.erisian.com.au/Wiki/debootstrap), the tool which can set up new Debian or Ubuntu system.
 
-fakechroot had found another purposes:
+fakechroot is also used in udocker:
+
+* [udocker](https://github.com/indigo-dc/udocker)
+
+fakechroot had found other purposes:
 
 * to be a part of [Klik](http://klik.atekon.de) application installer as kfakechroot project
 * to be a supporter for [pbuilder](http://pbuilder.alioth.debian.org/) building system
