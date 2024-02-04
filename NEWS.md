@@ -1,3 +1,12 @@
+## Version 2.19 UDOCKER-4
+
+3 Feb 2024
+
+* fix narrowing in dl functions
+* Improve command substitution
+* Add placeholders for command substitution
+* Add execvpe()
+
 ## Version 2.18
 
 26 Oct 2015
