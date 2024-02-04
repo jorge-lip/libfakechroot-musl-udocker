@@ -44,7 +44,7 @@ extern char **environ;
    Copyright (C) 1991,92, 1995-99, 2002, 2004, 2005, 2007, 2009
    Free Software Foundation, Inc.
  */
-wrapper(execvpe, int, (const char * file, char * const argv[], , char * const envp[]))
+wrapper(execvpe, int, (const char * file, char * const argv[], char * const envp[]))
 {
     debug("execvpe(\"%s\", {\"%s\", ...})", file, argv[0]);
     if (*file == '\0') {
