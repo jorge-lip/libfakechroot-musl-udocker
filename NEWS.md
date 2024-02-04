@@ -7,6 +7,13 @@
 * Add placeholders for command substitution
 * Add execvpe()
 
+## Version 2.19 UDOCKER-1
+
+23 Oct 2019
+
+* Port of the udocker fakechroot for the musl libc
+* Apply fixes from fakechroot 2.19
+
 ## Version 2.18
 
 26 Oct 2015
